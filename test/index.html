@@ -5,23 +5,53 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WS Relay Tester - 2x2</title>
     <style>
-        body { font-family: sans-serif; }
-        .container { display: flex; flex-wrap: wrap; gap: 20px; }
-        .panel { border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 45%; min-width: 480px; box-sizing: border-box; }
+        html, body {
+            height: 100%;
+            margin: 0;
+            font-family: sans-serif;
+            background-color: #f0f2f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 20px;
+            height: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        .panel {
+            border: 1px solid #ccc;
+            padding: 15px;
+            border-radius: 8px;
+            box-sizing: border-box;
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
         h2 { margin-top: 0; }
 
         .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
-        .input-group input { flex-grow: 1; min-width: 50px; } /* Позволяем инпутам сжиматься, но не слишком сильно */
-        .input-group button { flex-shrink: 0; width: 100px; } /* Фиксированная ширина для кнопок */
+        .input-group input { flex-grow: 1; width: 100px; }
+        .input-group button { flex-shrink: 0; width: 100px; }
 
         input, button { padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
 
-        .logs { height: 250px; overflow-y: scroll; border: 1px solid #eee; padding: 10px; background: #f9f9f9; white-space: pre-wrap; }
+        .logs {
+            flex-grow: 1;
+            overflow-y: scroll;
+            border: 1px solid #eee;
+            padding: 10px;
+            background: #f9f9f9;
+            white-space: pre-wrap;
+            border-radius: 4px;
+        }
         .log-msg { margin: 0 0 5px 0; font-size: 0.9em; }
-        .log-msg.sent { color: blue; }
-        .log-msg.received { color: green; }
-        .log-msg.error { color: red; }
-        .log-msg.info { color: gray; }
+        .log-msg.sent { color: #00529B; }
+        .log-msg.received { color: #4F8A10; }
+        .log-msg.error { color: #D8000C; }
+        .log-msg.info { color: #555; }
     </style>
 </head>
 <body>

@@ -1,13 +1,22 @@
-const WebSocket = require('ws');
-const url = require('url');
+import WebSocket, { RawData } from 'ws';
+import http from 'http';
+import url from 'url';
+import dotenv from 'dotenv';
 
-require('dotenv').config();
+dotenv.config();
 
-const port = process.env.PORT || 8080;
+type ConnectionType = 'agent' | 'client';
+
+interface TokenConnections {
+    agents: Set<WebSocket>;
+    clients: Set<WebSocket>;
+}
+
+const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 const wss = new WebSocket.Server({ port });
-const connectionsByTokens = new Map();
+const connectionsByTokens = new Map<string, TokenConnections>();
 
-function getOrCreateTokenConnections(token) {
+function getOrCreateTokenConnections(token: string): TokenConnections {
     if (!connectionsByTokens.has(token)) {
         connectionsByTokens.set(token, {
             agents: new Set(),
@@ -15,10 +24,10 @@ function getOrCreateTokenConnections(token) {
         });
     }
 
-    return connectionsByTokens.get(token);
+    return connectionsByTokens.get(token)!;
 }
 
-function registerConnection(ws, token, type) {
+function registerConnection(ws: WebSocket, token: string, type: ConnectionType): void {
     const tokenConnections = getOrCreateTokenConnections(token);
     const connectionSet = type === 'agent' ? tokenConnections.agents : tokenConnections.clients;
 
@@ -27,15 +36,20 @@ function registerConnection(ws, token, type) {
     console.log(`[INFO] ${type} connected with token: ${token}. Total ${type}s: ${connectionSet.size}`);
 }
 
-function handleMessage(ws, token, type, message) {
+function handleMessage(token: string, type: ConnectionType, message: RawData): void {
     const messageForLog = message.toString().substring(0, 100);
 
     console.log(`[MESS] Received from ${type} with token ${token}: "${messageForLog}..."`);
 
     const tokenConnections = connectionsByTokens.get(token);
+
+    if (!tokenConnections) {
+        return;
+    }
+
     const isFromAgent = type === 'agent';
     const targets = isFromAgent ? tokenConnections.clients : tokenConnections.agents;
-    const targetType = isFromAgent ? 'client' : 'agent';
+    const targetType: ConnectionType = isFromAgent ? 'client' : 'agent';
 
     if (targets.size === 0) {
         console.log(`[WARN] No ${targetType}s for token ${token}.`);
@@ -51,7 +65,7 @@ function handleMessage(ws, token, type, message) {
     });
 }
 
-function handleClose(ws, token, type) {
+function handleClose(ws: WebSocket, token: string, type: ConnectionType): void {
     const tokenConnections = connectionsByTokens.get(token);
 
     if (!tokenConnections) {
@@ -71,27 +85,29 @@ function handleClose(ws, token, type) {
     }
 }
 
-function handleConnection(ws, req) {
-    const { query } = url.parse(req.url, true);
-    const { token, type } = query;
+function handleConnection(ws: WebSocket, req: http.IncomingMessage): void {
+    const { query } = url.parse(req.url || '', true);
+    const token = query.token as string;
+    const type = query.type as ConnectionType;
 
-    if (!token || !type || (type !== 'agent' && type !== 'client')) {
-        console.log('[WARN] Invalid connection params. Closing connection.');
+    if (!token || (type !== 'agent' && type !== 'client')) {
         ws.close(1008, 'Invalid token or type');
+        console.log('[WARN] Invalid connection params. Closing connection.');
         return;
     }
 
     registerConnection(ws, token, type);
 
-    ws.on('message', (message) => handleMessage(ws, token, type, message));
+    ws.on('message', (message: RawData) => handleMessage(token, type, message));
     ws.on('close', () => handleClose(ws, token, type));
-    ws.on('error', (error) => console.error(`[ERROR] Token ${token}:`, error));
+    ws.on('error', (error: Error) => console.error(`[ERROR] Token ${token}:`, error));
 }
 
-function shutdown() {
+function shutdown(): void {
     console.log('\n[INFO] Server is shutting down.');
+
     wss.close(() => {
-        console.log('[INFO] All WebSocket connectionsByTokens closed.');
+        console.log('[INFO] All WebSocket connections closed.');
         process.exit(0);
     });
 }

@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  ws-relay:
+    build: .
+    container_name: ws-relay-app
+    restart: unless-stopped
+    ports:
+      - "${PORT}:${PORT}"
+    env_file:
+      - .env

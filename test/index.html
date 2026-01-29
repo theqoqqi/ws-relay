@@ -7,11 +7,15 @@
     <style>
         body { font-family: sans-serif; }
         .container { display: flex; flex-wrap: wrap; gap: 20px; }
-        .panel { border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 45%; min-width: 400px; box-sizing: border-box; }
+        .panel { border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 45%; min-width: 480px; box-sizing: border-box; }
         h2 { margin-top: 0; }
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        input, button { padding: 8px; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
-        .full-width { grid-column: 1 / -1; }
+
+        .input-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .input-group input { flex-grow: 1; min-width: 50px; } /* Позволяем инпутам сжиматься, но не слишком сильно */
+        .input-group button { flex-shrink: 0; width: 100px; } /* Фиксированная ширина для кнопок */
+
+        input, button { padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+
         .logs { height: 250px; overflow-y: scroll; border: 1px solid #eee; padding: 10px; background: #f9f9f9; white-space: pre-wrap; }
         .log-msg { margin: 0 0 5px 0; font-size: 0.9em; }
         .log-msg.sent { color: blue; }
@@ -25,49 +29,57 @@
 <div class="container">
     <div class="panel">
         <h2>Agent 1</h2>
-        <div class="controls">
+        <div class="input-group">
             <input type="text" id="agent1-host" placeholder="Host" value="localhost">
             <input type="text" id="agent1-port" placeholder="Port" value="11169">
-            <input type="text" id="agent1-token" class="full-width" placeholder="Token" value="token-A">
-            <button id="agent1-connect" class="full-width">Connect Agent 1</button>
-            <input type="text" id="agent1-msg" class="full-width" placeholder="Message to send">
-            <button id="agent1-send" class="full-width">Send</button>
+            <input type="text" id="agent1-token" placeholder="Token" value="token-A">
+            <button id="agent1-connect">Connect</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="agent1-msg" placeholder="Message to send">
+            <button id="agent1-send">Send</button>
         </div>
         <div class="logs" id="agent1-logs"></div>
     </div>
     <div class="panel">
         <h2>Agent 2</h2>
-        <div class="controls">
+        <div class="input-group">
             <input type="text" id="agent2-host" placeholder="Host" value="localhost">
             <input type="text" id="agent2-port" placeholder="Port" value="11169">
-            <input type="text" id="agent2-token" class="full-width" placeholder="Token" value="token-B">
-            <button id="agent2-connect" class="full-width">Connect Agent 2</button>
-            <input type="text" id="agent2-msg" class="full-width" placeholder="Message to send">
-            <button id="agent2-send" class="full-width">Send</button>
+            <input type="text" id="agent2-token" placeholder="Token" value="token-B">
+            <button id="agent2-connect">Connect</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="agent2-msg" placeholder="Message to send">
+            <button id="agent2-send">Send</button>
         </div>
         <div class="logs" id="agent2-logs"></div>
     </div>
     <div class="panel">
         <h2>Client 1</h2>
-        <div class="controls">
+        <div class="input-group">
             <input type="text" id="client1-host" placeholder="Host" value="localhost">
             <input type="text" id="client1-port" placeholder="Port" value="11169">
-            <input type="text" id="client1-token" class="full-width" placeholder="Token" value="token-A">
-            <button id="client1-connect" class="full-width">Connect Client 1</button>
-            <input type="text" id="client1-msg" class="full-width" placeholder="Message to send">
-            <button id="client1-send" class="full-width">Send</button>
+            <input type="text" id="client1-token" placeholder="Token" value="token-A">
+            <button id="client1-connect">Connect</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="client1-msg" placeholder="Message to send">
+            <button id="client1-send">Send</button>
         </div>
         <div class="logs" id="client1-logs"></div>
     </div>
     <div class="panel">
         <h2>Client 2</h2>
-        <div class="controls">
+        <div class="input-group">
             <input type="text" id="client2-host" placeholder="Host" value="localhost">
             <input type="text" id="client2-port" placeholder="Port" value="11169">
-            <input type="text" id="client2-token" class="full-width" placeholder="Token" value="token-B">
-            <button id="client2-connect" class="full-width">Connect Client 2</button>
-            <input type="text" id="client2-msg" class="full-width" placeholder="Message to send">
-            <button id="client2-send" class="full-width">Send</button>
+            <input type="text" id="client2-token" placeholder="Token" value="token-B">
+            <button id="client2-connect">Connect</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="client2-msg" placeholder="Message to send">
+            <button id="client2-send">Send</button>
         </div>
         <div class="logs" id="client2-logs"></div>
     </div>
@@ -131,7 +143,7 @@
 
             ws.onclose = () => {
                 log('Connection closed.', 'info');
-                connectBtn.textContent = `Connect ${type}`;
+                connectBtn.textContent = `Connect`;
                 ws = null;
             };
 

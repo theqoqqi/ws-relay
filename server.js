@@ -1,6 +1,8 @@
 const WebSocket = require('ws');
 const url = require('url');
 
+require('dotenv').config();
+
 const port = 8080;
 const wss = new WebSocket.Server({ port });
 const connectionsByTokens = new Map();

@@ -128,6 +128,9 @@
         const logsDiv = document.getElementById(`${instanceId}-logs`);
 
         let ws = null;
+        let isConnecting = false;
+        let shouldReconnect = false;
+        let reconnectTimeoutId = null;
 
         function log(message, className = 'info') {
             const p = document.createElement('p');
@@ -137,18 +140,18 @@
             logsDiv.scrollTop = logsDiv.scrollHeight;
         }
 
-        connectBtn.addEventListener('click', () => {
-            if (ws) {
-                ws.close();
-                return;
-            }
-
+        function connect() {
             const host = hostInput.value.trim();
             const port = portInput.value.trim();
             const token = tokenInput.value.trim();
 
+            isConnecting = true;
+
             if (!host || !port || !token) {
                 log('Host, Port, and Token are required.', 'error');
+                shouldReconnect = false;
+                connectBtn.textContent = 'Connect';
+                isConnecting = false;
                 return;
             }
 
@@ -157,30 +160,52 @@
             log(`Connecting to ${url}...`);
 
             ws.onopen = () => {
+                isConnecting = false;
                 log('Connection established.', 'info');
-                connectBtn.textContent = `Disconnect`;
+                connectBtn.textContent = 'Disconnect';
             };
 
             ws.onmessage = (event) => {
                 if (event.data instanceof Blob) {
-                    event.data.text().then(text => {
-                        log(`Received: ${text}`, 'received');
-                    });
+                    event.data.text().then(text => log(`Received: ${text}`, 'received'));
                 } else {
                     log(`Received: ${event.data}`, 'received');
                 }
             };
 
             ws.onclose = () => {
-                log('Connection closed.', 'info');
-                connectBtn.textContent = `Connect`;
                 ws = null;
+                isConnecting = false;
+
+                if (shouldReconnect) {
+                    log('Connection lost. Reconnecting in 3 seconds...', 'info');
+                    reconnectTimeoutId = setTimeout(connect, 3000);
+                } else {
+                    log('Connection closed.', 'info');
+                    connectBtn.textContent = 'Connect';
+                }
             };
 
             ws.onerror = (error) => {
-                log('WebSocket error.', 'error');
-                console.error(`[${instanceId}] WebSocket Error:`, error);
+                // Ошибки будут обработаны в onclose
             };
+        }
+
+        connectBtn.addEventListener('click', () => {
+            if (ws || isConnecting || shouldReconnect) {
+                shouldReconnect = false;
+                if (ws) {
+                    ws.close();
+                } else {
+                    clearTimeout(reconnectTimeoutId);
+                    log('Reconnection cancelled.', 'info');
+                    connectBtn.textContent = 'Connect';
+                }
+            } else {
+                shouldReconnect = true;
+                connectBtn.textContent = 'Disconnect';
+                connect();
+            }
         });
 
         sendBtn.addEventListener('click', () => {
@@ -188,8 +213,12 @@
                 log('Not connected.', 'error');
                 return;
             }
+
             const msg = msgInput.value;
-            if (!msg) return;
+
+            if (!msg) {
+                return;
+            }
 
             ws.send(msg);
             log(`Sent: ${msg}`, 'sent');

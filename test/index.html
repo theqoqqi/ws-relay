@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WS Relay Tester - 2x2</title>
+    <style>
+        body { font-family: sans-serif; }
+        .container { display: flex; flex-wrap: wrap; gap: 20px; }
+        .panel { border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 45%; min-width: 400px; box-sizing: border-box; }
+        h2 { margin-top: 0; }
+        input, button { padding: 8px; margin-bottom: 10px; width: calc(100% - 18px); box-sizing: border-box; }
+        .logs { height: 250px; overflow-y: scroll; border: 1px solid #eee; padding: 10px; background: #f9f9f9; white-space: pre-wrap; }
+        .log-msg { margin: 0 0 5px 0; font-size: 0.9em; }
+        .log-msg.sent { color: blue; }
+        .log-msg.received { color: green; }
+        .log-msg.error { color: red; }
+        .log-msg.info { color: gray; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="panel">
+        <h2>Agent 1</h2>
+        <input type="text" id="agent1-token" placeholder="Token" value="token-A">
+        <button id="agent1-connect">Connect Agent 1</button>
+        <input type="text" id="agent1-msg" placeholder="Message to send">
+        <button id="agent1-send">Send</button>
+        <div class="logs" id="agent1-logs"></div>
+    </div>
+    <div class="panel">
+        <h2>Agent 2</h2>
+        <input type="text" id="agent2-token" placeholder="Token" value="token-B">
+        <button id="agent2-connect">Connect Agent 2</button>
+        <input type="text" id="agent2-msg" placeholder="Message to send">
+        <button id="agent2-send">Send</button>
+        <div class="logs" id="agent2-logs"></div>
+    </div>
+    <div class="panel">
+        <h2>Client 1</h2>
+        <input type="text" id="client1-token" placeholder="Token" value="token-A">
+        <button id="client1-connect">Connect Client 1</button>
+        <input type="text" id="client1-msg" placeholder="Message to send">
+        <button id="client1-send">Send</button>
+        <div class="logs" id="client1-logs"></div>
+    </div>
+    <div class="panel">
+        <h2>Client 2</h2>
+        <input type="text" id="client2-token" placeholder="Token" value="token-B">
+        <button id="client2-connect">Connect Client 2</button>
+        <input type="text" id="client2-msg" placeholder="Message to send">
+        <button id="client2-send">Send</button>
+        <div class="logs" id="client2-logs"></div>
+    </div>
+</div>
+
+<script>
+    function setupWebSocket(instanceId) {
+        const host = 'localhost';
+        const port = 11169;
+
+        const type = instanceId.startsWith('agent') ? 'agent' : 'client';
+
+        const tokenInput = document.getElementById(`${instanceId}-token`);
+        const connectBtn = document.getElementById(`${instanceId}-connect`);
+        const msgInput = document.getElementById(`${instanceId}-msg`);
+        const sendBtn = document.getElementById(`${instanceId}-send`);
+        const logsDiv = document.getElementById(`${instanceId}-logs`);
+
+        let ws = null;
+
+        function log(message, className = 'info') {
+            const p = document.createElement('p');
+            p.className = `log-msg ${className}`;
+            p.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logsDiv.appendChild(p);
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        connectBtn.addEventListener('click', () => {
+            if (ws) {
+                ws.close();
+                return;
+            }
+
+            const token = tokenInput.value.trim();
+            if (!token) {
+                log('Token is required.', 'error');
+                return;
+            }
+
+            const url = `ws://${host}:${port}?token=${token}&type=${type}`;
+            ws = new WebSocket(url);
+            log(`Connecting to ${url}...`);
+
+            ws.onopen = () => {
+                log('Connection established.', 'info');
+                connectBtn.textContent = `Disconnect`;
+            };
+
+            ws.onmessage = (event) => {
+                if (event.data instanceof Blob) {
+                    event.data.text().then(text => {
+                        log(`Received: ${text}`, 'received');
+                    });
+                } else {
+                    log(`Received: ${event.data}`, 'received');
+                }
+            };
+
+            ws.onclose = () => {
+                log('Connection closed.', 'info');
+                connectBtn.textContent = `Connect ${type}`;
+                ws = null;
+            };
+
+            ws.onerror = (error) => {
+                log('WebSocket error.', 'error');
+                console.error(`[${instanceId}] WebSocket Error:`, error);
+            };
+        });
+
+        sendBtn.addEventListener('click', () => {
+            if (!ws || ws.readyState !== WebSocket.OPEN) {
+                log('Not connected.', 'error');
+                return;
+            }
+            const msg = msgInput.value;
+            if (!msg) return;
+
+            ws.send(msg);
+            log(`Sent: ${msg}`, 'sent');
+            msgInput.value = '';
+        });
+    }
+
+    setupWebSocket('agent1');
+    setupWebSocket('agent2');
+    setupWebSocket('client1');
+    setupWebSocket('client2');
+</script>
+
+</body>
+</html>

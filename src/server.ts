@@ -20,6 +20,7 @@ class ConnectionRole {
 const roles = new Map<string, ConnectionRole>([
     ['agent', new ConnectionRole('agent', ['client'])],
     ['client', new ConnectionRole('client', ['agent'])],
+    ['broadcast', new ConnectionRole('broadcast', ['broadcast'])],
 ]);
 
 type TokenConnections = Map<string, Set<WebSocket>>;

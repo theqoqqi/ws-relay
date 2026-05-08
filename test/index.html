@@ -173,7 +173,7 @@
 
 <script>
     function setupWebSocket(instanceId) {
-        const type = instanceId.startsWith('agent') ? 'agent' : (instanceId.startsWith('client') ? 'client' : 'broadcast');
+        const role = instanceId.startsWith('agent') ? 'agent' : (instanceId.startsWith('client') ? 'client' : 'broadcast');
 
         const hostInput = document.getElementById(`${instanceId}-host`);
         const portInput = document.getElementById(`${instanceId}-port`);
@@ -211,7 +211,7 @@
                 return;
             }
 
-            const url = `ws://${host}:${port}?token=${token}&type=${type}`;
+            const url = `ws://${host}:${port}?token=${token}&role=${role}`;
             ws = new WebSocket(url);
             log(`Connecting to ${url}...`);
 

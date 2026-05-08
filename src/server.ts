@@ -118,10 +118,10 @@ function handleClose(ws: WebSocket, token: string, type: string): void {
 function handleConnection(ws: WebSocket, req: http.IncomingMessage): void {
     const { query } = url.parse(req.url || '', true);
     const token = query.token as string;
-    const type = query.type as string;
+    const type = (query.role || query.type) as string;
 
     if (!token || !roles.has(type)) {
-        ws.close(1008, 'Invalid token or type');
+        ws.close(1008, 'Invalid token or role');
         console.log('[WARN] Invalid connection params. Closing connection.');
         return;
     }

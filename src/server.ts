@@ -29,9 +29,9 @@ const port = process.env.PORT ? Number(process.env.PORT) : 8080;
 const wss = new WebSocket.Server({ port });
 const connectionsByTokens = new Map<string, TokenConnections>();
 
-function registerConnection(ws: WebSocket, token: string, type: string): void {
+function registerConnection(ws: WebSocket, token: string, role: string): void {
     const tokenConnections = getOrCreateTokenConnections(token);
-    const connectionSet = tokenConnections.get(type);
+    const connectionSet = tokenConnections.get(role);
 
     if (!connectionSet) {
         return;
@@ -39,7 +39,7 @@ function registerConnection(ws: WebSocket, token: string, type: string): void {
 
     connectionSet.add(ws);
 
-    console.log(`[INFO] ${type} connected with token: ${token}. Total ${type}s: ${connectionSet.size}`);
+    console.log(`[INFO] ${role} connected with token: ${token}. Total ${role}s: ${connectionSet.size}`);
 }
 
 function getOrCreateTokenConnections(token: string): TokenConnections {
@@ -58,10 +58,10 @@ function createTokenConnections(): TokenConnections {
     );
 }
 
-function handleMessage(ws: WebSocket, token: string, type: string, message: RawData): void {
+function handleMessage(ws: WebSocket, token: string, role: string, message: RawData): void {
     const messageForLog = message.toString().substring(0, 100);
 
-    console.log(`[MESS] Received from ${type} with token ${token}: "${messageForLog}..."`);
+    console.log(`[MESS] Received from ${role} with token ${token}: "${messageForLog}..."`);
 
     const tokenConnections = connectionsByTokens.get(token);
 
@@ -69,13 +69,13 @@ function handleMessage(ws: WebSocket, token: string, type: string, message: RawD
         return;
     }
 
-    const role = roles.get(type);
+    const connectionRole = roles.get(role);
 
-    if (!role) {
+    if (!connectionRole) {
         return;
     }
 
-    const targetSockets = role.targets
+    const targetSockets = connectionRole.targets
         .map(name => tokenConnections.get(name))
         .filter(set => !!set)
         .flatMap(set => Array.from(set))
@@ -87,24 +87,24 @@ function handleMessage(ws: WebSocket, token: string, type: string, message: RawD
     });
 
     if (targetSockets.length === 0) {
-        console.log(`[WARN] No targets available for role ${type} with token ${token}.`);
+        console.log(`[WARN] No targets available for role ${role} with token ${token}.`);
     } else {
         console.log(`[MESS] Relaying to ${targetSockets.length} connection(s) for token ${token}`);
     }
 }
 
-function handleClose(ws: WebSocket, token: string, type: string): void {
+function handleClose(ws: WebSocket, token: string, role: string): void {
     const tokenConnections = connectionsByTokens.get(token);
 
     if (!tokenConnections) {
         return;
     }
 
-    const connectionSet = tokenConnections.get(type);
+    const connectionSet = tokenConnections.get(role);
 
     if (connectionSet) {
         connectionSet.delete(ws);
-        console.log(`[INFO] ${type} disconnected with token: ${token}. Remaining: ${connectionSet.size}`);
+        console.log(`[INFO] ${role} disconnected with token: ${token}. Remaining: ${connectionSet.size}`);
     }
 
     const hasConnections = Array.from(tokenConnections.values()).some(set => set.size > 0);
@@ -118,18 +118,18 @@ function handleClose(ws: WebSocket, token: string, type: string): void {
 function handleConnection(ws: WebSocket, req: http.IncomingMessage): void {
     const { query } = url.parse(req.url || '', true);
     const token = query.token as string;
-    const type = (query.role || query.type) as string;
+    const role = (query.role || query.type) as string;
 
-    if (!token || !roles.has(type)) {
+    if (!token || !roles.has(role)) {
         ws.close(1008, 'Invalid token or role');
         console.log('[WARN] Invalid connection params. Closing connection.');
         return;
     }
 
-    registerConnection(ws, token, type);
+    registerConnection(ws, token, role);
 
-    ws.on('message', (message: RawData) => handleMessage(ws, token, type, message));
-    ws.on('close', () => handleClose(ws, token, type));
+    ws.on('message', (message: RawData) => handleMessage(ws, token, role, message));
+    ws.on('close', () => handleClose(ws, token, role));
     ws.on('error', (error: Error) => console.error(`[ERROR] Token ${token}:`, error));
 }
 

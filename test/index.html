@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WS Relay Tester - 2x2</title>
+    <title>WS Relay Tester - 4x2</title>
     <style>
         html, body {
             height: 100%;
@@ -13,8 +13,8 @@
         }
         .container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
+            grid-template-columns: repeat(4, 1fr);
+            grid-template-rows: auto;
             gap: 20px;
             height: 100%;
             padding: 20px;
@@ -86,6 +86,34 @@
         <div class="logs" id="agent2-logs"></div>
     </div>
     <div class="panel">
+        <h2>Broadcast 1</h2>
+        <div class="input-group">
+            <input type="text" id="broadcast1-host" placeholder="Host" value="localhost">
+            <input type="text" id="broadcast1-port" placeholder="Port" value="11169">
+            <input type="text" id="broadcast1-token" placeholder="Token" value="token-A">
+            <button id="broadcast1-connect">Connect</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="broadcast1-msg" placeholder="Message to send">
+            <button id="broadcast1-send">Send</button>
+        </div>
+        <div class="logs" id="broadcast1-logs"></div>
+    </div>
+    <div class="panel">
+        <h2>Broadcast 2</h2>
+        <div class="input-group">
+            <input type="text" id="broadcast2-host" placeholder="Host" value="localhost">
+            <input type="text" id="broadcast2-port" placeholder="Port" value="11169">
+            <input type="text" id="broadcast2-token" placeholder="Token" value="token-A">
+            <button id="broadcast2-connect">Connect</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="broadcast2-msg" placeholder="Message to send">
+            <button id="broadcast2-send">Send</button>
+        </div>
+        <div class="logs" id="broadcast2-logs"></div>
+    </div>
+    <div class="panel">
         <h2>Client 1</h2>
         <div class="input-group">
             <input type="text" id="client1-host" placeholder="Host" value="localhost">
@@ -113,11 +141,39 @@
         </div>
         <div class="logs" id="client2-logs"></div>
     </div>
+    <div class="panel">
+        <h2>Broadcast 3</h2>
+        <div class="input-group">
+            <input type="text" id="broadcast3-host" placeholder="Host" value="localhost">
+            <input type="text" id="broadcast3-port" placeholder="Port" value="11169">
+            <input type="text" id="broadcast3-token" placeholder="token-A">
+            <button id="broadcast3-connect">Connect</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="broadcast3-msg" placeholder="Message to send">
+            <button id="broadcast3-send">Send</button>
+        </div>
+        <div class="logs" id="broadcast3-logs"></div>
+    </div>
+    <div class="panel">
+        <h2>Broadcast 4</h2>
+        <div class="input-group">
+            <input type="text" id="broadcast4-host" placeholder="Host" value="localhost">
+            <input type="text" id="broadcast4-port" placeholder="Port" value="11169">
+            <input type="text" id="broadcast4-token" placeholder="token-A">
+            <button id="broadcast4-connect">Connect</button>
+        </div>
+        <div class="input-group">
+            <input type="text" id="broadcast4-msg" placeholder="Message to send">
+            <button id="broadcast4-send">Send</button>
+        </div>
+        <div class="logs" id="broadcast4-logs"></div>
+    </div>
 </div>
 
 <script>
     function setupWebSocket(instanceId) {
-        const type = instanceId.startsWith('agent') ? 'agent' : 'client';
+        const type = instanceId.startsWith('agent') ? 'agent' : (instanceId.startsWith('client') ? 'client' : 'broadcast');
 
         const hostInput = document.getElementById(`${instanceId}-host`);
         const portInput = document.getElementById(`${instanceId}-port`);
@@ -230,6 +286,10 @@
     setupWebSocket('agent2');
     setupWebSocket('client1');
     setupWebSocket('client2');
+    setupWebSocket('broadcast1');
+    setupWebSocket('broadcast2');
+    setupWebSocket('broadcast3');
+    setupWebSocket('broadcast4');
 </script>
 
 </body>
